@@ -1,6 +1,8 @@
 import './App.scss'
 import avatar from './images/bozai.png'
 import { useState } from "react";
+import _ from 'lodash'
+import classNames from 'classnames'
 
 
 /**
@@ -25,7 +27,7 @@ const defaultList = [
     content: '哎哟，不错哦',
     // 评论时间
     ctime: '10-18 08:15',
-    like: 88,
+    like: 126,
   },
   {
     rpid: 2,
@@ -76,7 +78,33 @@ const tabs = [
 ]
 
 const App = () => {
-  const [commentList, setCommentList] = useState(defaultList)
+  const [commentList, setCommentList] = useState(_.orderBy(defaultList, 'like', 'desc'))
+  
+  // 注意删除功能的一般逻辑！
+  // 拿到当前项id以id为条件对评论列表做filter过滤
+  function handleDel(id) {
+    console.log(id)
+    setCommentList(commentList.filter(item => item.rpid !== id))
+  }
+  
+  //tab切换功能
+  //点击谁就记录谁的type
+  //type匹配，然后控制激活显示
+  const [type, setType] = useState("hot")
+  function handleTabChange(type) {
+    console.log(type)
+    setType(type)
+    //基于列表的排序
+    if(type === 'hot'){
+      //根据点赞数排序
+      //lodash n
+      setCommentList(_.orderBy(commentList, 'like', 'desc'))
+    } else {
+      setCommentList(_.orderBy(commentList, 'ctime', 'desc'))
+    }
+  }
+
+
   return (
     <div className="app">
       {/* 导航 Tab */}
@@ -89,8 +117,14 @@ const App = () => {
           </li>
           <li className="nav-sort">
             {/* 高亮类名： active */}
-            <span className='nav-item'>最新</span>
-            <span className='nav-item'>最热</span>
+            {tabs.map(item => 
+              <span 
+                key={item.type} 
+                onClick={() => handleTabChange(item.type)} 
+                // className={`nav-item ${type === item.type && 'active'}`}
+                className={classNames('nav-item', {'active': type === item.type})}>
+                {item.text}
+              </span>)}
           </li>
         </ul>
       </div>
@@ -144,10 +178,12 @@ const App = () => {
                   {/* 评论时间 */}
                   <span className="reply-time">{item.ctime}</span>
                   {/* 评论数量 */}
-                  <span className="reply-time">{item.like}</span>
-                  <span className="delete-btn">
+                  <span className="reply-time">点赞数：{item.like}</span>
+                  {/* 通过userid进行匹配！ */}
+                  {user.uid === item.user.uid && 
+                  <span className="delete-btn" onClick={() => handleDel(item.rpid)}>
                     删除
-                  </span>
+                  </span>}
 
                 </div>
               </div>

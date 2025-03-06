@@ -32,12 +32,29 @@ const foodsStore = createSlice({
                 //保证了count字段的存在
                 state.cartList.push({...action.payload, count:1})
             }
+        },
+        //购物车count增
+        increCount (state, action) {
+            //关键点：找到当前要修改谁的count
+            const item = state.cartList.find(item => item.id === action.payload.id)
+            item.count++
+        },
+        //购物车count减
+        decreCount (state, action) {
+            const item = state.cartList.find(item => item.id === action.payload.id)
+            if(item.count === 0){
+                return
+            }
+            item.count--
+        },
+        clearCart (state) {
+            state.cartList = []
         }
     }
 })
 
 //异步获取
-const {setFoodsList, changeActiveIndex, addCart} = foodsStore.actions
+const {setFoodsList, changeActiveIndex, addCart, increCount, decreCount, clearCart } = foodsStore.actions
 
 const fetchFoodsList = () => {
     //编写异步逻辑
@@ -48,7 +65,7 @@ const fetchFoodsList = () => {
     }
 }
 
-export { fetchFoodsList, changeActiveIndex, addCart }
+export { fetchFoodsList, changeActiveIndex, addCart, increCount, decreCount, clearCart }
 
 const reducer = foodsStore.reducer
 

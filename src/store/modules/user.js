@@ -7,12 +7,15 @@ const userStore = createSlice({
     name: "user",
     //数据状态
     initialState:{
-        token:''
+        //从本地先去取取看，实现了持久化
+        token:localStorage.getItem('token_key') || ''
     },
     //同步修改方法
     reducers:{
         setToken(state, action) {
             state.token = action.payload
+            //在本地localStorage也存一份
+            localStorage.setItem('token_key', action.payload)
         }
     }
 })

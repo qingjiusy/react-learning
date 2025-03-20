@@ -3,12 +3,13 @@ import Layout from "@/pages/Layouts";
 import Login from "@/pages/Login";
 
 import {createBrowserRouter} from 'react-router-dom'
+import {AuthRoute} from '@/components/AuthRoute'
 
 //配置路由实例
 const router = createBrowserRouter([
     {
         path:"/",
-        element:<Layout />
+        element:<AuthRoute><Layout /></AuthRoute>
     },
     {
         path:"/login",

@@ -11,12 +11,12 @@ import {
     message
   } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import './index.scss'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { useState } from 'react'
-import { createArticleAPI} from '@/apis/article'
+import { useEffect, useState } from 'react'
+import { createArticleAPI, getArticleById, updateArticleAPI} from '@/apis/article'
 import { useChannel } from '@/hooks/useChannel'
   
 const { Option } = Select
@@ -36,12 +36,25 @@ const Publish = () => {
             content,
             cover: {
                 type: imageType, //封面模式
-                images: imageList.map(item => item.response.data.url) //图片列表 
+                //这里url要针对不同的逻辑写不同的样式变换来保证正确传参
+                images: imageList.map(item => {
+                    if(item.response){
+                        return item.response.data.url
+                    }else{
+                        return item.url
+                    }
+                }) //图片列表 
             },
             channel_id
         }
         //调用接口
-        createArticleAPI(reqData)
+        //处理调用不同的接口 新增 - 新增接口 编辑状态 - 更新接口
+        //根据有无id判断！
+        if(articleId){
+            updateArticleAPI({...reqData, id: articleId})
+        }else{
+            createArticleAPI(reqData)
+        }
     }
 
     //上传回调
@@ -56,13 +69,46 @@ const Publish = () => {
         setImageType(e.target.value)
     }
 
+    //回填数据
+    const [searchParams] = useSearchParams()
+    const articleId = searchParams.get('id')
+    //获取实例
+    //在 Ant Design 的表单系统中，Form.useForm()是一个自定义 Hook
+    // 用来获取表单实例 form。这个实例可以让你主动控制表单
+    const [form] = Form.useForm()
+
+    async function getArticleDetail() {
+        const res = await getArticleById(articleId)
+        const data = res.data
+
+        form.setFieldsValue({
+            ...data,
+            type: data.cover.type
+        })
+        //回填图片列表，根据虾米那的逻辑我们要显示图片要先保证imageType正确
+        setImageType(data.cover.type)
+        //显示图片
+        setImageList(data.cover.images.map(url=> {
+            return { url }
+        }))
+    }
+
+    useEffect(() => {
+        //通过id获取数据
+        //同时要考虑到只有有id的时候才能调用此函数回填
+        if(articleId){
+            getArticleDetail()
+        }
+        //调用实例方法完成回填
+    }, [articleId, form])
+
     return (
         <div className="publish">
         <Card
             title={
             <Breadcrumb items={[
                 { title: <Link to={'/'}>首页</Link> },
-                { title: '发布文章' },
+                { title: `${articleId ? '编辑' : '发布'}文章` },
             ]}
             />
             }
@@ -72,6 +118,7 @@ const Publish = () => {
             wrapperCol={{ span: 16 }}
             initialValues={{ type: 0 }}
             onFinish={onFinish}
+            form={form}
             >
             <Form.Item
                 label="标题"
@@ -109,6 +156,7 @@ const Publish = () => {
                 name="image"
                 onChange={onChange}
                 maxCount={imageType}
+                fileList={imageList}
             >
                 <div style={{ marginTop: 8 }}>
                 <PlusOutlined />
